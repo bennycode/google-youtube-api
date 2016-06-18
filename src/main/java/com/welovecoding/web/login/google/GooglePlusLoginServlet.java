@@ -36,10 +36,17 @@ public class GooglePlusLoginServlet extends HttpServlet {
     YouTubeScopes.YOUTUBE_READONLY
   );
 
-  @Override
+  private static final Logger LOG = Logger.getLogger(GooglePlusLoginServlet.class.getName());
+
+  static {
+    LOG.setLevel(Level.INFO);
+  }
+
   /**
+   * @throws javax.servlet.ServletException
    * @todo Outsource credentials into Bean
    */
+  @Override
   public void init() throws ServletException {
     super.init();
 
@@ -52,7 +59,7 @@ public class GooglePlusLoginServlet extends HttpServlet {
         properties.load(stream);
         CLIENT_ID = properties.getProperty("GOOGLE_PLUS_LOGIN_CLIENT_ID");
         CLIENT_SECRET = properties.getProperty("GOOGLE_PLUS_LOGIN_CLIENT_SECRET");
-        System.out.println("Secret: " + CLIENT_SECRET);
+        LOG.log(Level.INFO, "Client secret: {0}", CLIENT_SECRET);
       } catch (IOException ex) {
         Logger.getLogger(GooglePlusLoginServlet.class.getName()).log(Level.SEVERE, null, ex);
       }
