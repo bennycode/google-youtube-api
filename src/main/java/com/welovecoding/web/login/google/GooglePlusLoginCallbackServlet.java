@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -24,17 +27,20 @@ public class GooglePlusLoginCallbackServlet extends HttpServlet {
     LOG.setLevel(Level.INFO);
   }
 
-  @Override
   /**
-   * @todo Catch "google-plus-login-callback?error=access_denied&state=/profile"
+   * @param request servlet request
+   * @param response servlet response
+   * @throws ServletException if a servlet-specific error occurs
+   * @throws IOException if an I/O error occurs
    * @see https://developers.google.com/google-apps/tasks/oauth-authorization-callback-handler?hl=de
    */
+  @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
-    throws IOException {
-    // Checking if there was an error such as the user denied access
-    String error = request.getParameter("error");
+    throws IOException, ServletException {
     if (request.getParameter("error") != null) {
-      response.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, error);
+      ServletContext context = getServletContext();
+      RequestDispatcher rd = context.getRequestDispatcher(URL.GOOGLE_PLUS_LOGIN_ERROR);
+      rd.forward(request, response);
       return;
     }
 
