@@ -35,5 +35,6 @@ Any value defined here will override the pom.xml file value but is only applicab
         <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.wrapThrowsList>WRAP_IF_LONG</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.wrapThrowsList>
         <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.wrapTryResources>WRAP_IF_LONG</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.wrapTryResources>
         <org-netbeans-modules-maven-j2ee.netbeans_2e_hint_2e_deploy_2e_server>gfv3ee6</org-netbeans-modules-maven-j2ee.netbeans_2e_hint_2e_deploy_2e_server>
+        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.continuationIndentSize>2</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.continuationIndentSize>
     </properties>
 </project-shared-configuration>
