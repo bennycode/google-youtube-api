@@ -12,9 +12,28 @@
     <properties>
         <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <google.plus.login.client.id>tiger</google.plus.login.client.id>
+        <google.plus.login.client.secret>logmein</google.plus.login.client.secret>
     </properties>
     
     <dependencies>
+        <dependency>
+            <groupId>com.github.scribejava</groupId>
+            <artifactId>scribejava-apis</artifactId>
+            <version>2.7.3</version>
+            <type>jar</type>
+        </dependency>      
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-plus</artifactId>
+            <version>v1-rev401-1.22.0</version>
+        </dependency>
+        <dependency>
+          <groupId>com.google.apis</groupId>
+          <artifactId>google-api-services-youtube</artifactId>
+          <version>v3-rev176-1.22.0</version>
+          <type>jar</type>
+        </dependency>
         <dependency>
             <groupId>javax</groupId>
             <artifactId>javaee-web-api</artifactId>
@@ -24,6 +43,12 @@
     </dependencies>
 
     <build>
+        <resources>
+          <resource>
+              <directory>src/main/resources</directory>
+              <filtering>true</filtering>
+          </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -37,6 +62,14 @@
                     </compilerArguments>
                 </configuration>
             </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-resources-plugin</artifactId>
+              <version>2.6</version>
+              <configuration>
+                <encoding>UTF-8</encoding>
+              </configuration>
+            </plugin>         
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
