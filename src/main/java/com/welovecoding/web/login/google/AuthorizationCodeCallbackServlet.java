@@ -15,16 +15,20 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-@WebServlet(urlPatterns = {URL.GOOGLE_PLUS_LOGIN_CALLBACK})
 /**
+ * Authorization code callback servlet to process the authorization code or error response from authorization page redirect.
+ *
  * @see https://code.google.com/p/google-api-java-client/wiki/OAuth2
+ * @see https://github.com/google/google-oauth-java-client/blob/dev/google-oauth-client-servlet/src/main/java/com/google/api/client/extensions/servlet/auth/oauth2/AbstractAuthorizationCodeCallbackServlet.java
  */
+@WebServlet(urlPatterns = {URL.GOOGLE_PLUS_LOGIN_CALLBACK})
 public class AuthorizationCodeCallbackServlet extends HttpServlet {
 
   private static final Logger LOG = Logger.getLogger(AuthorizationCodeCallbackServlet.class.getName());
 
   @Inject
   private UtilBean googlePlusLoginUtil;
+  private String accessToken;
 
   static {
     LOG.setLevel(Level.INFO);
@@ -41,36 +45,41 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
   public void doGet(HttpServletRequest request, HttpServletResponse response)
     throws IOException, ServletException {
     if (request.getParameter("error") != null) {
-      ServletContext context = super.getServletContext();
-      RequestDispatcher dispatcher = context.getRequestDispatcher(URL.GOOGLE_PLUS_LOGIN_ERROR);
-      dispatcher.forward(request, response);
-      return;
-    }
-
-    // Google returns a "code" that can be exchanged for an access token
-    String code = request.getParameter("code");
-    if (code == null) {
-      response.sendError(HttpServletResponse.SC_BAD_REQUEST, "The 'code' URL parameter is missing");
+      onError(request, response);
     } else {
-      String baseUrl = getBaseUrl(request);
-      GoogleTokenResponse tokenResponse = googlePlusLoginUtil.convertCodeToToken(code, baseUrl + URL.GOOGLE_PLUS_LOGIN_CALLBACK);
-      String accessToken = tokenResponse.getIdToken();
-
-      // Send response
-      LOG.log(Level.INFO, "Access Token: {0}", accessToken);
-      response.setContentType("text/html;charset=UTF-8");
-      try (PrintWriter out = response.getWriter()) {
-        out.println("<!DOCTYPE html>");
-        out.println("<html>");
-        out.println("<head>");
-        out.println("<title>Servlet Bla</title>");
-        out.println("</head>");
-        out.println("<body>");
-        out.println(String.format("<p>Access token: </p><pre>%s</pre>", accessToken));
-        out.println("</body>");
-        out.println("</html>");
+      String code = request.getParameter("code");
+      if (code == null) {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "The 'code' URL parameter is missing");
+      } else {
+        String baseUrl = getBaseUrl(request);
+        GoogleTokenResponse tokenResponse = googlePlusLoginUtil.convertCodeToToken(code, baseUrl + URL.GOOGLE_PLUS_LOGIN_CALLBACK);
+        accessToken = tokenResponse.getIdToken();
+        onSuccess(request, response);
       }
     }
+  }
+
+  private void onSuccess(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    LOG.log(Level.INFO, "Access Token: {0}", accessToken);
+    response.setContentType("text/html;charset=UTF-8");
+    try (PrintWriter out = response.getWriter()) {
+      out.println("<!DOCTYPE html>");
+      out.println("<html>");
+      out.println("<head>");
+      out.println("<title>Servlet Bla</title>");
+      out.println("</head>");
+      out.println("<body>");
+      out.println(String.format("<p>Access token: </p><pre>%s</pre>", accessToken));
+      out.println("</body>");
+      out.println("</html>");
+    }
+  }
+
+  private void onError(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+    ServletContext context = super.getServletContext();
+    RequestDispatcher dispatcher = context.getRequestDispatcher(URL.GOOGLE_PLUS_LOGIN_ERROR);
+    dispatcher.forward(request, response);
   }
 
 }
