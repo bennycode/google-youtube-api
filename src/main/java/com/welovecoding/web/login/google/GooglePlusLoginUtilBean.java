@@ -1,5 +1,6 @@
 package com.welovecoding.web.login.google;
 
+import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
@@ -36,8 +37,6 @@ public class GooglePlusLoginUtilBean implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  private static String CLIENT_ID;
-  private static String CLIENT_SECRET;
   private static GoogleClientSecrets clientSecrets;
   private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
   private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
@@ -59,8 +58,6 @@ public class GooglePlusLoginUtilBean implements Serializable {
     InputStreamReader reader = new InputStreamReader(stream);
     try {
       clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, reader);
-      CLIENT_ID = clientSecrets.getDetails().getClientId();
-      CLIENT_SECRET = clientSecrets.getDetails().getClientSecret();
     } catch (IOException ex) {
       LOG.log(Level.SEVERE, ex.getMessage());
     }
@@ -70,26 +67,16 @@ public class GooglePlusLoginUtilBean implements Serializable {
     return new GoogleAuthorizationCodeTokenRequest(
       HTTP_TRANSPORT,
       JSON_FACTORY,
-      CLIENT_ID,
-      CLIENT_SECRET,
+      clientSecrets.getDetails().getClientId(),
+      clientSecrets.getDetails().getClientSecret(),
       code,
       redirectUri
     ).execute();
   }
 
-  public String getUser(GoogleTokenResponse googleTokenResponse) throws IOException {
-    GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
+  public AuthorizationCodeFlow getFlow() {
+    return new GoogleAuthorizationCodeFlow.Builder(
       HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES
     ).build();
-
-    String userId = googleTokenResponse.parseIdToken().getPayload().getSubject();
-    Credential credential = flow.createAndStoreCredential(googleTokenResponse, userId);
-    HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(credential);
-
-    GenericUrl url = new GenericUrl("https://www.googleapis.com/oauth2/v1/userinfo");
-    HttpRequest request = requestFactory.buildGetRequest(url);
-    String jsonIdentity = request.execute().parseAsString();
-
-    return jsonIdentity;
   }
 }
