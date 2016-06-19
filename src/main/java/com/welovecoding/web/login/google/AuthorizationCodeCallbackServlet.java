@@ -26,13 +26,13 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
 
   private static final Logger LOG = Logger.getLogger(AuthorizationCodeCallbackServlet.class.getName());
 
-  @Inject
-  private UtilBean googlePlusLoginUtil;
-  private String accessToken;
-
   static {
     LOG.setLevel(Level.INFO);
   }
+
+  private String accessToken;
+  @Inject
+  private UtilBean googlePlusLoginUtil;
 
   /**
    * @param request servlet request
@@ -59,6 +59,13 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
     }
   }
 
+  private void onError(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+    ServletContext context = super.getServletContext();
+    RequestDispatcher dispatcher = context.getRequestDispatcher(URL.GOOGLE_PLUS_LOGIN_ERROR);
+    dispatcher.forward(request, response);
+  }
+
   private void onSuccess(HttpServletRequest request, HttpServletResponse response) throws IOException {
     LOG.log(Level.INFO, "Access Token: {0}", accessToken);
     response.setContentType("text/html;charset=UTF-8");
@@ -74,12 +81,4 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
       out.println("</html>");
     }
   }
-
-  private void onError(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-    ServletContext context = super.getServletContext();
-    RequestDispatcher dispatcher = context.getRequestDispatcher(URL.GOOGLE_PLUS_LOGIN_ERROR);
-    dispatcher.forward(request, response);
-  }
-
 }

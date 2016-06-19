@@ -1,14 +1,10 @@
 package com.welovecoding.web.login.google;
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
-import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -35,9 +31,6 @@ import javax.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class UtilBean implements Serializable {
 
-  private static final long serialVersionUID = 1L;
-
-  private static GoogleClientSecrets clientSecrets;
   private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
   private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
   private static final Logger LOG = Logger.getLogger(UtilBean.class.getName());
@@ -46,21 +39,11 @@ public class UtilBean implements Serializable {
     PlusScopes.USERINFO_PROFILE,
     YouTubeScopes.YOUTUBE_READONLY
   );
+  private static GoogleClientSecrets clientSecrets;
+  private static final long serialVersionUID = 1L;
 
   static {
     LOG.setLevel(Level.INFO);
-  }
-
-  @PostConstruct
-  void init() {
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    InputStream stream = classLoader.getResourceAsStream("/production/google/client_secrets.json");
-    InputStreamReader reader = new InputStreamReader(stream);
-    try {
-      clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, reader);
-    } catch (IOException ex) {
-      LOG.log(Level.SEVERE, ex.getMessage());
-    }
   }
 
   public GoogleTokenResponse convertCodeToToken(String code, String redirectUri) throws IOException {
@@ -78,5 +61,17 @@ public class UtilBean implements Serializable {
     return new GoogleAuthorizationCodeFlow.Builder(
       HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES
     ).build();
+  }
+
+  @PostConstruct
+  void init() {
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    InputStream stream = classLoader.getResourceAsStream("/production/google/client_secrets.json");
+    InputStreamReader reader = new InputStreamReader(stream);
+    try {
+      clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, reader);
+    } catch (IOException ex) {
+      LOG.log(Level.SEVERE, ex.getMessage());
+    }
   }
 }

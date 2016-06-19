@@ -19,6 +19,18 @@ public class AuthorizationErrorServlet extends HttpServlet {
     LOG.setLevel(Level.INFO);
   }
 
+  @Override
+  protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+    processRequest(request, response);
+  }
+
+  @Override
+  protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+    processRequest(request, response);
+  }
+
   protected void processRequest(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
     String error = request.getParameter("error");
@@ -36,17 +48,5 @@ public class AuthorizationErrorServlet extends HttpServlet {
       out.println("</body>");
       out.println("</html>");
     }
-  }
-
-  @Override
-  protected void doGet(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-    processRequest(request, response);
-  }
-
-  @Override
-  protected void doPost(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-    processRequest(request, response);
   }
 }
