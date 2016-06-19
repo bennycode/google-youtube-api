@@ -54,10 +54,12 @@ public class GooglePlusLoginCallbackServlet extends HttpServlet {
     } else {
       String baseUrl = getBaseUrl(request);
       GoogleTokenResponse tokenResponse = googlePlusLoginUtil.convertCodeToToken(code, baseUrl + URL.GOOGLE_PLUS_LOGIN_CALLBACK);
+      String user = googlePlusLoginUtil.getUser(tokenResponse);
       String accessToken = tokenResponse.getIdToken();
 
       // Send response
       LOG.log(Level.INFO, "Access Token: {0}", accessToken);
+      LOG.log(Level.INFO, "Google User: {0}", user);
       response.setContentType("text/html;charset=UTF-8");
       try (PrintWriter out = response.getWriter()) {
         out.println("<!DOCTYPE html>");

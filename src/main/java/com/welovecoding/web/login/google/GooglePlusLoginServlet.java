@@ -30,11 +30,6 @@ public class GooglePlusLoginServlet extends HttpServlet {
   private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
   private static String CLIENT_ID;
   private static String CLIENT_SECRET;
-  private static final List<String> SCOPES = Arrays.asList(
-    PlusScopes.USERINFO_EMAIL,
-    PlusScopes.USERINFO_PROFILE,
-    YouTubeScopes.YOUTUBE_READONLY
-  );
 
   private static final Logger LOG = Logger.getLogger(GooglePlusLoginServlet.class.getName());
 
