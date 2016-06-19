@@ -51,12 +51,16 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
       if (code == null) {
         response.sendError(HttpServletResponse.SC_BAD_REQUEST, "The 'code' URL parameter is missing");
       } else {
-        String baseUrl = getBaseUrl(request);
-        GoogleTokenResponse tokenResponse = googlePlusLoginUtil.convertCodeToToken(code, baseUrl + URL.GOOGLE_PLUS_LOGIN_CALLBACK);
-        accessToken = tokenResponse.getIdToken();
+        parsePayload(request, code);
         onSuccess(request, response);
       }
     }
+  }
+
+  private void parsePayload(HttpServletRequest request, String code) throws IOException {
+    String baseUrl = getBaseUrl(request);
+    GoogleTokenResponse tokenResponse = googlePlusLoginUtil.convertCodeToToken(code, baseUrl + URL.GOOGLE_PLUS_LOGIN_CALLBACK);
+    accessToken = tokenResponse.getIdToken();
   }
 
   private void onError(HttpServletRequest request, HttpServletResponse response)
