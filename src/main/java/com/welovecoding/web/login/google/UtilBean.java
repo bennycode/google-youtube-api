@@ -33,14 +33,14 @@ import javax.enterprise.context.ApplicationScoped;
  * @see https://developers.google.com/api-client-library/java/google-api-java-client/oauth2#web_server_applications
  */
 @ApplicationScoped
-public class GooglePlusLoginUtilBean implements Serializable {
+public class UtilBean implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
   private static GoogleClientSecrets clientSecrets;
   private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
   private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-  private static final Logger LOG = Logger.getLogger(GooglePlusLoginUtilBean.class.getName());
+  private static final Logger LOG = Logger.getLogger(UtilBean.class.getName());
   private static final List<String> SCOPES = Arrays.asList(
     PlusScopes.USERINFO_EMAIL,
     PlusScopes.USERINFO_PROFILE,

@@ -7,10 +7,10 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 
 @WebServlet(urlPatterns = {URL.GOOGLE_PLUS_LOGIN})
-public class GooglePlusLoginServlet extends AbstractAuthorizationCodeServlet {
+public class AuthorizationCodeServlet extends AbstractAuthorizationCodeServlet {
 
   @Inject
-  private GooglePlusLoginUtilBean util;
+  private UtilBean util;
 
   public static String getBaseUrl(HttpServletRequest request) {
     String scheme = request.getScheme() + "://";

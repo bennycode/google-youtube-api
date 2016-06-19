@@ -11,9 +11,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @WebServlet(name = "GooglePlusLoginErrorServlet", urlPatterns = {URL.GOOGLE_PLUS_LOGIN_ERROR})
-public class GooglePlusLoginErrorServlet extends HttpServlet {
+public class AuthorizationErrorServlet extends HttpServlet {
 
-  private static final Logger LOG = Logger.getLogger(GooglePlusLoginErrorServlet.class.getName());
+  private static final Logger LOG = Logger.getLogger(AuthorizationErrorServlet.class.getName());
 
   static {
     LOG.setLevel(Level.INFO);

@@ -1,7 +1,7 @@
 package com.welovecoding.web.login.google;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
-import static com.welovecoding.web.login.google.GooglePlusLoginServlet.getBaseUrl;
+import static com.welovecoding.web.login.google.AuthorizationCodeServlet.getBaseUrl;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.logging.Level;
@@ -19,12 +19,12 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * @see https://code.google.com/p/google-api-java-client/wiki/OAuth2
  */
-public class GooglePlusLoginCallbackServlet extends HttpServlet {
+public class AuthorizationCodeCallbackServlet extends HttpServlet {
 
-  private static final Logger LOG = Logger.getLogger(GooglePlusLoginCallbackServlet.class.getName());
+  private static final Logger LOG = Logger.getLogger(AuthorizationCodeCallbackServlet.class.getName());
 
   @Inject
-  private GooglePlusLoginUtilBean googlePlusLoginUtil;
+  private UtilBean googlePlusLoginUtil;
 
   static {
     LOG.setLevel(Level.INFO);
