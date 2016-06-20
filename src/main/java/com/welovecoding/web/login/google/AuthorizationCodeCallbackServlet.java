@@ -34,7 +34,7 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
 
   private String accessToken;
   @Inject
-  private UtilBean googlePlusLoginUtil;
+  private UtilBean util;
 
   /**
    * @param request servlet request
@@ -59,13 +59,6 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
     }
   }
 
-  private void parsePayload(HttpServletRequest request, String code)
-    throws IOException {
-    String baseUrl = getBaseUrl(request);
-    GoogleTokenResponse tokenResponse = googlePlusLoginUtil.convertCode(code, baseUrl + URL.GOOGLE_PLUS_LOGIN_CALLBACK);
-    accessToken = tokenResponse.getAccessToken();
-  }
-
   private void onError(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
     ServletContext context = super.getServletContext();
@@ -73,12 +66,13 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
     dispatcher.forward(request, response);
   }
 
-  private void onSuccess(HttpServletResponse response) throws IOException {
+  private void onSuccess(HttpServletResponse response)
+    throws IOException {
     Person user = null;
 
     try {
-      Plus client = googlePlusLoginUtil.getPlusClient(accessToken);
-      user = googlePlusLoginUtil.getSelfUser(client);
+      Plus client = util.getPlusClient(accessToken);
+      user = util.getSelfUser(client);
     } catch (Exception ex) {
       LOG.log(Level.SEVERE, ex.getMessage());
     }
@@ -98,5 +92,12 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
       out.println("</body>");
       out.println("</html>");
     }
+  }
+
+  private void parsePayload(HttpServletRequest request, String code)
+    throws IOException {
+    String baseUrl = getBaseUrl(request);
+    GoogleTokenResponse tokenResponse = util.convertCode(code, baseUrl + URL.GOOGLE_PLUS_LOGIN_CALLBACK);
+    accessToken = tokenResponse.getAccessToken();
   }
 }

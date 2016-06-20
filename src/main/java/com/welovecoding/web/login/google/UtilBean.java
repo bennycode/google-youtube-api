@@ -60,7 +60,8 @@ public class UtilBean implements Serializable {
     LOG.setLevel(Level.INFO);
   }
 
-  public GoogleTokenResponse convertCode(String code, String redirectUri) throws IOException {
+  public GoogleTokenResponse convertCode(String code, String redirectUri)
+    throws IOException {
     return new GoogleAuthorizationCodeTokenRequest(
       HTTP_TRANSPORT,
       JSON_FACTORY,
@@ -70,13 +71,15 @@ public class UtilBean implements Serializable {
       redirectUri
     ).execute();
   }
+
   /**
    * @see http://www.programcreek.com/java-api-examples/index.php?api=com.google.api.services.plus.Plus
    * @param person
    * @return
    * @throws Exception
    */
-  public String getEmailAddress(Person person) throws Exception {
+  public String getEmailAddress(Person person)
+    throws Exception {
     String emailAddress = null;
 
     List<Person.Emails> emails = person.getEmails();
@@ -99,7 +102,6 @@ public class UtilBean implements Serializable {
     ).build();
   }
 
-
   public Plus getPlusClient(String accessToken) {
     GoogleCredential credential = new GoogleCredential().setAccessToken(accessToken);
     return new Plus.Builder(
@@ -113,7 +115,8 @@ public class UtilBean implements Serializable {
    * @return
    * @throws IOException
    */
-  public Person getSelfUser(Plus client) throws IOException {
+  public Person getSelfUser(Plus client)
+    throws IOException {
     return client.people().get("me").execute();
   }
 
@@ -135,7 +138,8 @@ public class UtilBean implements Serializable {
     }
   }
 
-  GoogleClientSecrets readClientSecrets(String file) throws IOException {
+  GoogleClientSecrets readClientSecrets(String file)
+    throws IOException {
     GoogleClientSecrets secrets;
 
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -147,7 +151,8 @@ public class UtilBean implements Serializable {
     return secrets;
   }
 
-  String readProjectId(String file) throws IOException {
+  String readProjectId(String file)
+    throws IOException {
     String projectId;
 
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -160,9 +165,11 @@ public class UtilBean implements Serializable {
 
     return projectId;
   }
-  public boolean verifyIdToken(GoogleTokenResponse googleTokenResponse) throws IOException {
+
+  public boolean verifyIdToken(GoogleTokenResponse googleTokenResponse)
+    throws IOException {
     boolean isValid = false;
-    
+
     GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
       HTTP_TRANSPORT,
       JacksonFactory.getDefaultInstance(),
@@ -170,16 +177,16 @@ public class UtilBean implements Serializable {
       clientSecrets.getDetails().getClientSecret(),
       SCOPES
     ).build();
-    
+
     String userId = googleTokenResponse.parseIdToken().getPayload().getSubject();
     Credential credential = flow.createAndStoreCredential(googleTokenResponse, userId);
     HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(credential);
-    
+
     String idToken = googleTokenResponse.getIdToken();
     GenericUrl url = new GenericUrl("https://www.googleapis.com/oauth2/v1/tokeninfo?id_token=" + idToken);
     HttpRequest request = requestFactory.buildGetRequest(url);
     String response = request.execute().parseAsString();
-    
+
     InputStream stream = new ByteArrayInputStream(response.getBytes(StandardCharsets.UTF_8));
     JsonReader reader = Json.createReader(stream);
     JsonObject json = reader.readObject();
@@ -187,7 +194,7 @@ public class UtilBean implements Serializable {
     if (expiresIn > 0) {
       isValid = true;
     }
-    
+
     return isValid;
   }
 }
