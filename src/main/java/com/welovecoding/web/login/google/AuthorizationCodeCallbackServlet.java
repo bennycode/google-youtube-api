@@ -1,6 +1,7 @@
 package com.welovecoding.web.login.google;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.api.services.oauth2.model.Userinfoplus;
 import com.google.api.services.plus.Plus;
 import com.google.api.services.plus.model.Person;
 import static com.welovecoding.web.login.google.AuthorizationCodeServlet.getBaseUrl;
@@ -66,13 +67,28 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
     accessToken = tokenResponse.getIdToken();
 
     LOG.log(Level.INFO, "Access Token: {0}", accessToken);
-    LOG.log(Level.INFO, "User info 1", googlePlusLoginUtil.getUserInfo(tokenResponse));
+    
+    // TODO: Use the "accessToken" to query:
+    // "https://www.googleapis.com/oauth2/v1/tokeninfo?id_token="
+
+//    try {
+//      LOG.log(Level.INFO, "User info 1", googlePlusLoginUtil.getUserInfo(tokenResponse));
+//    } catch (Exception ex) {
+//      LOG.log(Level.SEVERE, ex.getMessage());
+//    }
+
+//    try {
+//      Userinfoplus userInfo = googlePlusLoginUtil.getUserInfo(accessToken);
+//      LOG.log(Level.INFO, "User info 2", userInfo.getEmail());
+//    } catch (Exception ex) {
+//      LOG.log(Level.SEVERE, ex.getMessage());
+//    }
 
     try {
       Plus client = googlePlusLoginUtil.getPlusClient(accessToken);
       Person user = googlePlusLoginUtil.getSelfUser(client);
-      LOG.log(Level.INFO, "User info 2", user);
-    } catch (IOException ex) {
+      LOG.log(Level.INFO, "User info 3", user);
+    } catch (Exception ex) {
       LOG.log(Level.SEVERE, ex.getMessage());
     }
   }

@@ -15,6 +15,8 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.oauth2.Oauth2;
+import com.google.api.services.oauth2.model.Userinfoplus;
 import com.google.api.services.plus.Plus;
 import com.google.api.services.plus.PlusScopes;
 import com.google.api.services.plus.model.Person;
@@ -95,6 +97,18 @@ public class UtilBean implements Serializable {
     HttpRequest request = requestFactory.buildGetRequest(url);
     String userInfo = request.execute().parseAsString();
     return userInfo;
+  }
+
+  public Userinfoplus getUserInfo(final String accessToken) throws IOException {
+    Oauth2 userInfoService = new Oauth2.Builder(
+      HTTP_TRANSPORT, JSON_FACTORY, (new HttpRequestInitializer() {
+      @Override
+      public void initialize(HttpRequest request) throws IOException {
+        request.getHeaders().put("Authorization", "Bearer " + accessToken);
+      }
+    })).setApplicationName(applicationName).build();
+
+    return userInfoService.userinfo().get().execute();
   }
 
   /**
