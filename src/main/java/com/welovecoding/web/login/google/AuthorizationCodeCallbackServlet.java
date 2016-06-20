@@ -1,6 +1,8 @@
 package com.welovecoding.web.login.google;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.api.services.plus.Plus;
+import com.google.api.services.plus.model.Person;
 import static com.welovecoding.web.login.google.AuthorizationCodeServlet.getBaseUrl;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -57,10 +59,22 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
     }
   }
 
-  private void parsePayload(HttpServletRequest request, String code) throws IOException {
+  private void parsePayload(HttpServletRequest request, String code)
+    throws IOException {
     String baseUrl = getBaseUrl(request);
     GoogleTokenResponse tokenResponse = googlePlusLoginUtil.convertCodeToToken(code, baseUrl + URL.GOOGLE_PLUS_LOGIN_CALLBACK);
     accessToken = tokenResponse.getIdToken();
+
+    LOG.log(Level.INFO, "Access Token: {0}", accessToken);
+    LOG.log(Level.INFO, "User info 1", googlePlusLoginUtil.getUserInfo(tokenResponse));
+
+    try {
+      Plus client = googlePlusLoginUtil.getPlusClient(accessToken);
+      Person user = googlePlusLoginUtil.getSelfUser(client);
+      LOG.log(Level.INFO, "User info 2", user);
+    } catch (IOException ex) {
+      LOG.log(Level.SEVERE, ex.getMessage());
+    }
   }
 
   private void onError(HttpServletRequest request, HttpServletResponse response)
@@ -71,13 +85,12 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
   }
 
   private void onSuccess(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    LOG.log(Level.INFO, "Access Token: {0}", accessToken);
     response.setContentType("text/html;charset=UTF-8");
     try (PrintWriter out = response.getWriter()) {
       out.println("<!DOCTYPE html>");
       out.println("<html>");
       out.println("<head>");
-      out.println("<title>Servlet Bla</title>");
+      out.println("<title>Servlet</title>");
       out.println("</head>");
       out.println("<body>");
       out.println(String.format("<p>Access token: </p><pre>%s</pre>", accessToken));

@@ -1,17 +1,23 @@
 package com.welovecoding.web.login.google;
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
+import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.plus.Plus;
 import com.google.api.services.plus.PlusScopes;
+import com.google.api.services.plus.model.Person;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.YouTubeScopes;
 import java.io.IOException;
@@ -42,6 +48,7 @@ public class UtilBean implements Serializable {
   private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
   private static final Logger LOG = Logger.getLogger(UtilBean.class.getName());
   private static final List<String> SCOPES = Arrays.asList(
+    PlusScopes.PLUS_ME,
     PlusScopes.USERINFO_EMAIL,
     PlusScopes.USERINFO_PROFILE,
     YouTubeScopes.YOUTUBE_READONLY
@@ -68,7 +75,59 @@ public class UtilBean implements Serializable {
   public AuthorizationCodeFlow getFlow() {
     return new GoogleAuthorizationCodeFlow.Builder(
       HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES
-    ).build();
+    ).setAccessType("offline").build();
+  }
+
+  public String getUserInfo(GoogleTokenResponse googleTokenResponse) throws IOException {
+    GoogleAuthorizationCodeFlow flow
+      = new GoogleAuthorizationCodeFlow.Builder(
+        HTTP_TRANSPORT,
+        JSON_FACTORY,
+        clientSecrets.getDetails().getClientId(),
+        clientSecrets.getDetails().getClientSecret(),
+        SCOPES).build();
+
+    String userId = googleTokenResponse.parseIdToken().getPayload().getSubject();
+    Credential credential = flow.createAndStoreCredential(googleTokenResponse, userId);
+    HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(credential);
+
+    GenericUrl url = new GenericUrl("https://www.googleapis.com/oauth2/v1/userinfo");
+    HttpRequest request = requestFactory.buildGetRequest(url);
+    String userInfo = request.execute().parseAsString();
+    return userInfo;
+  }
+
+  /**
+   * @todo Outsource functionality to "PlusService" EJB
+   * @param client
+   * @return
+   * @throws IOException
+   */
+  public Person getSelfUser(Plus client) throws IOException {
+    return client.people().get("me").execute();
+  }
+
+  /**
+   * @see http://www.programcreek.com/java-api-examples/index.php?api=com.google.api.services.plus.Plus
+   * @param person
+   * @return
+   * @throws Exception
+   */
+  private String getEmailAddress(Person person) throws Exception {
+    String emailAddress = null;
+
+    List<Person.Emails> emails = person.getEmails();
+    for (Person.Emails email : emails) {
+      if (email.getType().equals("account")) {
+        emailAddress = email.getValue();
+      }
+    }
+
+    if (emailAddress == null) {
+      throw new Exception("Account email not in email list");
+    }
+
+    return emailAddress;
   }
 
   public Plus getPlusClient(String accessToken) {
@@ -83,6 +142,20 @@ public class UtilBean implements Serializable {
     return new YouTube.Builder(
       HTTP_TRANSPORT, JSON_FACTORY, credential
     ).setApplicationName(applicationName).build();
+  }
+
+  private GoogleCredential getCredential(final String accessToken) {
+    return new GoogleCredential.Builder()
+      .setClientSecrets(clientSecrets)
+      .setJsonFactory(JSON_FACTORY)
+      .setTransport(HTTP_TRANSPORT)
+      .setRequestInitializer((new HttpRequestInitializer() {
+        @Override
+        public void initialize(HttpRequest request)
+          throws IOException {
+          request.getHeaders().put("Authorization", "Bearer " + accessToken);
+        }
+      })).build();
   }
 
   @PostConstruct
