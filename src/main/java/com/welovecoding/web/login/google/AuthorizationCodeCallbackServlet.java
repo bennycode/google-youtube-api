@@ -1,7 +1,6 @@
 package com.welovecoding.web.login.google;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
-import com.google.api.services.oauth2.model.Userinfoplus;
 import com.google.api.services.plus.Plus;
 import com.google.api.services.plus.model.Person;
 import static com.welovecoding.web.login.google.AuthorizationCodeServlet.getBaseUrl;
@@ -55,7 +54,7 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
         response.sendError(HttpServletResponse.SC_BAD_REQUEST, "The 'code' URL parameter is missing");
       } else {
         parsePayload(request, code);
-        onSuccess(request, response);
+        onSuccess(response);
       }
     }
   }
@@ -63,34 +62,8 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
   private void parsePayload(HttpServletRequest request, String code)
     throws IOException {
     String baseUrl = getBaseUrl(request);
-    GoogleTokenResponse tokenResponse = googlePlusLoginUtil.convertCodeToToken(code, baseUrl + URL.GOOGLE_PLUS_LOGIN_CALLBACK);
-    accessToken = tokenResponse.getIdToken();
-
-    LOG.log(Level.INFO, "Access Token: {0}", accessToken);
-    
-    // TODO: Use the "accessToken" to query:
-    // "https://www.googleapis.com/oauth2/v1/tokeninfo?id_token="
-
-//    try {
-//      LOG.log(Level.INFO, "User info 1", googlePlusLoginUtil.getUserInfo(tokenResponse));
-//    } catch (Exception ex) {
-//      LOG.log(Level.SEVERE, ex.getMessage());
-//    }
-
-//    try {
-//      Userinfoplus userInfo = googlePlusLoginUtil.getUserInfo(accessToken);
-//      LOG.log(Level.INFO, "User info 2", userInfo.getEmail());
-//    } catch (Exception ex) {
-//      LOG.log(Level.SEVERE, ex.getMessage());
-//    }
-
-    try {
-      Plus client = googlePlusLoginUtil.getPlusClient(accessToken);
-      Person user = googlePlusLoginUtil.getSelfUser(client);
-      LOG.log(Level.INFO, "User info 3", user);
-    } catch (Exception ex) {
-      LOG.log(Level.SEVERE, ex.getMessage());
-    }
+    GoogleTokenResponse tokenResponse = googlePlusLoginUtil.convertCode(code, baseUrl + URL.GOOGLE_PLUS_LOGIN_CALLBACK);
+    accessToken = tokenResponse.getAccessToken();
   }
 
   private void onError(HttpServletRequest request, HttpServletResponse response)
@@ -100,7 +73,16 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
     dispatcher.forward(request, response);
   }
 
-  private void onSuccess(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  private void onSuccess(HttpServletResponse response) throws IOException {
+    Person user = null;
+
+    try {
+      Plus client = googlePlusLoginUtil.getPlusClient(accessToken);
+      user = googlePlusLoginUtil.getSelfUser(client);
+    } catch (Exception ex) {
+      LOG.log(Level.SEVERE, ex.getMessage());
+    }
+
     response.setContentType("text/html;charset=UTF-8");
     try (PrintWriter out = response.getWriter()) {
       out.println("<!DOCTYPE html>");
@@ -109,6 +91,9 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
       out.println("<title>Servlet</title>");
       out.println("</head>");
       out.println("<body>");
+      if (user != null) {
+        out.println(String.format("<h1>Hello, %s!</h1>", user.getDisplayName()));
+      }
       out.println(String.format("<p>Access token: </p><pre>%s</pre>", accessToken));
       out.println("</body>");
       out.println("</html>");

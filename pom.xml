@@ -34,12 +34,6 @@
       <type>jar</type>
     </dependency>
     <dependency>
-      <groupId>com.google.apis</groupId>
-      <artifactId>google-api-services-oauth2</artifactId>
-      <version>v2-rev112-1.22.0</version>
-      <type>jar</type>
-    </dependency>
-    <dependency>
       <groupId>javax</groupId>
       <artifactId>javaee-web-api</artifactId>
       <version>7.0</version>
