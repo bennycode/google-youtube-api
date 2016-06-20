@@ -4,23 +4,29 @@ import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.plus.Plus;
 import com.google.api.services.plus.PlusScopes;
 import com.google.api.services.youtube.YouTubeScopes;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
 
 /**
  * @see https://github.com/google/google-http-java-client
@@ -39,6 +45,7 @@ public class UtilBean implements Serializable {
     PlusScopes.USERINFO_PROFILE,
     YouTubeScopes.YOUTUBE_READONLY
   );
+  private static String applicationName;
   private static GoogleClientSecrets clientSecrets;
   private static final long serialVersionUID = 1L;
 
@@ -63,15 +70,47 @@ public class UtilBean implements Serializable {
     ).build();
   }
 
+  public Plus getPlusService(String accessToken) {
+    GoogleCredential credential = new GoogleCredential().setAccessToken(accessToken);
+    return new Plus.Builder(
+      HTTP_TRANSPORT, JSON_FACTORY, credential
+    ).setApplicationName(applicationName).build();
+  }
+
   @PostConstruct
   void init() {
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    InputStream stream = classLoader.getResourceAsStream("/production/google/client_secrets.json");
-    InputStreamReader reader = new InputStreamReader(stream);
+    String file = "/production/google/client_secrets.json";
     try {
-      clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, reader);
+      clientSecrets = readClientSecrets(file);
+      applicationName = readProjectId(file);
     } catch (IOException ex) {
       LOG.log(Level.SEVERE, ex.getMessage());
     }
+  }
+
+  GoogleClientSecrets readClientSecrets(String file) throws IOException {
+    GoogleClientSecrets secrets;
+
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    try (InputStream stream = classLoader.getResourceAsStream(file);
+      InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+      secrets = GoogleClientSecrets.load(JSON_FACTORY, reader);
+    }
+
+    return secrets;
+  }
+
+  String readProjectId(String file) throws IOException {
+    String projectId;
+
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    try (InputStream stream = classLoader.getResourceAsStream(file)) {
+      JsonReader reader = Json.createReader(stream);
+      JsonObject payload = reader.readObject();
+      JsonObject web = payload.getJsonObject("web");
+      projectId = web.getString("project_id");
+    }
+
+    return projectId;
   }
 }
