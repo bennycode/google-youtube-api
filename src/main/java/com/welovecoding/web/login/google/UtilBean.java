@@ -12,6 +12,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.plus.Plus;
 import com.google.api.services.plus.PlusScopes;
+import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.YouTubeScopes;
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,9 +71,16 @@ public class UtilBean implements Serializable {
     ).build();
   }
 
-  public Plus getPlusService(String accessToken) {
+  public Plus getPlusClient(String accessToken) {
     GoogleCredential credential = new GoogleCredential().setAccessToken(accessToken);
     return new Plus.Builder(
+      HTTP_TRANSPORT, JSON_FACTORY, credential
+    ).setApplicationName(applicationName).build();
+  }
+
+  public YouTube getYouTubeClient(String accessToken) {
+    GoogleCredential credential = new GoogleCredential().setAccessToken(accessToken);
+    return new YouTube.Builder(
       HTTP_TRANSPORT, JSON_FACTORY, credential
     ).setApplicationName(applicationName).build();
   }
