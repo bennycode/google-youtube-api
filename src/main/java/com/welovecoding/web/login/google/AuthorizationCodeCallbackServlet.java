@@ -1,6 +1,8 @@
 package com.welovecoding.web.login.google;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.api.services.plus.Plus;
+import com.google.api.services.plus.model.Person;
 import static com.welovecoding.web.login.google.AuthorizationCodeServlet.getBaseUrl;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -52,15 +54,16 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
         response.sendError(HttpServletResponse.SC_BAD_REQUEST, "The 'code' URL parameter is missing");
       } else {
         parsePayload(request, code);
-        onSuccess(request, response);
+        onSuccess(response);
       }
     }
   }
 
-  private void parsePayload(HttpServletRequest request, String code) throws IOException {
+  private void parsePayload(HttpServletRequest request, String code)
+    throws IOException {
     String baseUrl = getBaseUrl(request);
-    GoogleTokenResponse tokenResponse = googlePlusLoginUtil.convertCodeToToken(code, baseUrl + URL.GOOGLE_PLUS_LOGIN_CALLBACK);
-    accessToken = tokenResponse.getIdToken();
+    GoogleTokenResponse tokenResponse = googlePlusLoginUtil.convertCode(code, baseUrl + URL.GOOGLE_PLUS_LOGIN_CALLBACK);
+    accessToken = tokenResponse.getAccessToken();
   }
 
   private void onError(HttpServletRequest request, HttpServletResponse response)
@@ -70,16 +73,27 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
     dispatcher.forward(request, response);
   }
 
-  private void onSuccess(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    LOG.log(Level.INFO, "Access Token: {0}", accessToken);
+  private void onSuccess(HttpServletResponse response) throws IOException {
+    Person user = null;
+
+    try {
+      Plus client = googlePlusLoginUtil.getPlusClient(accessToken);
+      user = googlePlusLoginUtil.getSelfUser(client);
+    } catch (Exception ex) {
+      LOG.log(Level.SEVERE, ex.getMessage());
+    }
+
     response.setContentType("text/html;charset=UTF-8");
     try (PrintWriter out = response.getWriter()) {
       out.println("<!DOCTYPE html>");
       out.println("<html>");
       out.println("<head>");
-      out.println("<title>Servlet Bla</title>");
+      out.println("<title>Servlet</title>");
       out.println("</head>");
       out.println("<body>");
+      if (user != null) {
+        out.println(String.format("<h1>Hello, %s!</h1>", user.getDisplayName()));
+      }
       out.println(String.format("<p>Access token: </p><pre>%s</pre>", accessToken));
       out.println("</body>");
       out.println("</html>");

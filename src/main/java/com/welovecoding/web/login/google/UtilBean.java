@@ -1,19 +1,25 @@
 package com.welovecoding.web.login.google;
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
+import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.plus.Plus;
 import com.google.api.services.plus.PlusScopes;
+import com.google.api.services.plus.model.Person;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.YouTubeScopes;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -54,7 +60,7 @@ public class UtilBean implements Serializable {
     LOG.setLevel(Level.INFO);
   }
 
-  public GoogleTokenResponse convertCodeToToken(String code, String redirectUri) throws IOException {
+  public GoogleTokenResponse convertCode(String code, String redirectUri) throws IOException {
     return new GoogleAuthorizationCodeTokenRequest(
       HTTP_TRANSPORT,
       JSON_FACTORY,
@@ -64,6 +70,28 @@ public class UtilBean implements Serializable {
       redirectUri
     ).execute();
   }
+  /**
+   * @see http://www.programcreek.com/java-api-examples/index.php?api=com.google.api.services.plus.Plus
+   * @param person
+   * @return
+   * @throws Exception
+   */
+  public String getEmailAddress(Person person) throws Exception {
+    String emailAddress = null;
+
+    List<Person.Emails> emails = person.getEmails();
+    for (Person.Emails email : emails) {
+      if (email.getType().equals("account")) {
+        emailAddress = email.getValue();
+      }
+    }
+
+    if (emailAddress == null) {
+      throw new Exception("Account email not in email list");
+    }
+
+    return emailAddress;
+  }
 
   public AuthorizationCodeFlow getFlow() {
     return new GoogleAuthorizationCodeFlow.Builder(
@@ -71,11 +99,22 @@ public class UtilBean implements Serializable {
     ).build();
   }
 
+
   public Plus getPlusClient(String accessToken) {
     GoogleCredential credential = new GoogleCredential().setAccessToken(accessToken);
     return new Plus.Builder(
       HTTP_TRANSPORT, JSON_FACTORY, credential
     ).setApplicationName(applicationName).build();
+  }
+
+  /**
+   * @todo Outsource functionality to "PlusService" EJB
+   * @param client
+   * @return
+   * @throws IOException
+   */
+  public Person getSelfUser(Plus client) throws IOException {
+    return client.people().get("me").execute();
   }
 
   public YouTube getYouTubeClient(String accessToken) {
@@ -120,5 +159,35 @@ public class UtilBean implements Serializable {
     }
 
     return projectId;
+  }
+  public boolean verifyIdToken(GoogleTokenResponse googleTokenResponse) throws IOException {
+    boolean isValid = false;
+    
+    GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
+      HTTP_TRANSPORT,
+      JacksonFactory.getDefaultInstance(),
+      clientSecrets.getDetails().getClientId(),
+      clientSecrets.getDetails().getClientSecret(),
+      SCOPES
+    ).build();
+    
+    String userId = googleTokenResponse.parseIdToken().getPayload().getSubject();
+    Credential credential = flow.createAndStoreCredential(googleTokenResponse, userId);
+    HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(credential);
+    
+    String idToken = googleTokenResponse.getIdToken();
+    GenericUrl url = new GenericUrl("https://www.googleapis.com/oauth2/v1/tokeninfo?id_token=" + idToken);
+    HttpRequest request = requestFactory.buildGetRequest(url);
+    String response = request.execute().parseAsString();
+    
+    InputStream stream = new ByteArrayInputStream(response.getBytes(StandardCharsets.UTF_8));
+    JsonReader reader = Json.createReader(stream);
+    JsonObject json = reader.readObject();
+    int expiresIn = json.getInt("expires_in");
+    if (expiresIn > 0) {
+      isValid = true;
+    }
+    
+    return isValid;
   }
 }
