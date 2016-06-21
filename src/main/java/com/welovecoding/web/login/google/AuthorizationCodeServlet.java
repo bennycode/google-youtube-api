@@ -9,6 +9,8 @@ import javax.servlet.http.HttpServletRequest;
 @WebServlet(urlPatterns = {URL.GOOGLE_PLUS_LOGIN})
 public class AuthorizationCodeServlet extends AbstractAuthorizationCodeServlet {
 
+  @Inject private UtilBean util;
+
   public static String getBaseUrl(HttpServletRequest request) {
     String scheme = request.getScheme() + "://";
     String serverName = request.getServerName();
@@ -16,8 +18,6 @@ public class AuthorizationCodeServlet extends AbstractAuthorizationCodeServlet {
     String contextPath = request.getContextPath();
     return scheme + serverName + serverPort + contextPath;
   }
-  @Inject
-  private UtilBean util;
 
   @Override
   protected String getRedirectUri(HttpServletRequest request) {
@@ -33,4 +33,5 @@ public class AuthorizationCodeServlet extends AbstractAuthorizationCodeServlet {
   protected AuthorizationCodeFlow initializeFlow() {
     return util.getFlow();
   }
+
 }

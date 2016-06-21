@@ -35,12 +35,6 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 
-/**
- * @see https://github.com/google/google-http-java-client
- * @see
- * @see https://developers.google.com/api-client-library/java/
- * @see https://developers.google.com/api-client-library/java/google-api-java-client/oauth2#web_server_applications
- */
 @ApplicationScoped
 public class UtilBean implements Serializable {
 
@@ -109,12 +103,7 @@ public class UtilBean implements Serializable {
     ).setApplicationName(applicationName).build();
   }
 
-  /**
-   * @todo Outsource functionality to "PlusService" EJB
-   * @param client
-   * @return
-   * @throws IOException
-   */
+  // @todo Outsource functionality to "PlusService" EJB
   public Person getSelfUser(Plus client)
     throws IOException {
     return client.people().get("me").execute();
@@ -197,4 +186,5 @@ public class UtilBean implements Serializable {
 
     return isValid;
   }
+
 }
