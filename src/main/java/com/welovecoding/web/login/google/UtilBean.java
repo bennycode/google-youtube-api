@@ -166,7 +166,7 @@ public class UtilBean implements Serializable {
     return projectId;
   }
 
-  public boolean verifyIdToken(GoogleTokenResponse googleTokenResponse)
+  public boolean validateIdToken(GoogleTokenResponse googleTokenResponse)
     throws IOException {
     boolean isValid = false;
 
