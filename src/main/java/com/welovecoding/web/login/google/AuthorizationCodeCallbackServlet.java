@@ -4,6 +4,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.services.plus.Plus;
 import com.google.api.services.plus.model.Person;
 import static com.welovecoding.web.login.google.AuthorizationCodeServlet.getBaseUrl;
+import com.welovecoding.web.login.user.UserSessionBean;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.logging.Level;
@@ -32,9 +33,11 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
     LOG.setLevel(Level.INFO);
   }
 
+  @Inject private UserSessionBean userSessionBean;
+  @Inject private UtilBean util;
+  private HttpServletRequest request;
+  private HttpServletResponse response;
   private String accessToken;
-  @Inject
-  private UtilBean util;
 
   /**
    * @param request servlet request
@@ -46,27 +49,39 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
     throws IOException, ServletException {
+    this.request = request;
+    this.response = response;
+
     if (request.getParameter("error") != null) {
-      onError(request, response);
+      onError();
     } else {
       String code = request.getParameter("code");
       if (code == null) {
         response.sendError(HttpServletResponse.SC_BAD_REQUEST, "The 'code' URL parameter is missing");
       } else {
-        parsePayload(request, code);
-        onSuccess(response);
+        try {
+          parseAccessToken(code);
+          parseUser();
+        } catch (Exception ex) {
+          LOG.log(Level.SEVERE, ex.getMessage());
+          onError();
+        }
+        onSuccess();
       }
     }
   }
 
-  private void onError(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
+  private void onError() {
     ServletContext context = super.getServletContext();
     RequestDispatcher dispatcher = context.getRequestDispatcher(URL.GOOGLE_PLUS_LOGIN_ERROR);
-    dispatcher.forward(request, response);
+    try {
+      dispatcher.forward(request, response);
+    } catch (ServletException | IOException ex) {
+      LOG.log(Level.SEVERE, ex.getMessage());
+    }
   }
 
-  private void onSuccess(HttpServletResponse response)
+  private void onSuccess()
     throws IOException {
     Person user = null;
 
@@ -86,7 +101,7 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
       out.println("</head>");
       out.println("<body>");
       if (user != null) {
-        out.println(String.format("<h1>Hello, %s!</h1>", user.getDisplayName()));
+        out.println(String.format("<h1>Hello, %s!</h1>", userSessionBean.getUser().getEmail()));
       }
       out.println(String.format("<p>Access token: </p><pre>%s</pre>", accessToken));
       out.println("</body>");
@@ -94,10 +109,18 @@ public class AuthorizationCodeCallbackServlet extends HttpServlet {
     }
   }
 
-  private void parsePayload(HttpServletRequest request, String code)
+  private void parseAccessToken(String code)
     throws IOException {
     String baseUrl = getBaseUrl(request);
     GoogleTokenResponse tokenResponse = util.convertCode(code, baseUrl + URL.GOOGLE_PLUS_LOGIN_CALLBACK);
     accessToken = tokenResponse.getAccessToken();
   }
+
+  private void parseUser() throws IOException, Exception {
+    Plus client = util.getPlusClient(accessToken);
+    Person me = util.getSelfUser(client);
+    String emailAddress = util.getEmailAddress(me);
+    userSessionBean.getUser().setEmail(emailAddress);
+  }
+
 }
